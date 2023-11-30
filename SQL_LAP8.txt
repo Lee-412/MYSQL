@@ -1,0 +1,90 @@
+SELECT *
+FROM orders
+WHERE orderDate = (
+SELECT MAX(orderDate) FROM orders    
+)
+
+SELECT *
+FROM products
+WHERE productCode NOT IN
+(SELECT productCode
+FROM orderdetails
+);
+
+SELECT *
+FROM products
+WHERE productCode NOT IN
+(SELECT DISTINCT productCode
+FROM orderdetails
+);
+
+
+//cau1
+SELECT *
+FROM products 
+WHERE productCode IN (
+	SELECT productcode
+    FROM orderdetails 
+	WHERE  orderNumber IN  (
+   		 	SELECT orderNumber 
+ 		   FROM orders
+ 		   WHERE orderDate > '2005-3-1'  AND orderDate < '2005-3-31'
+))
+
+
+//cau2
+SELECT *
+FROM orders
+WHERE MONTH(orderDate) =(
+			SELECT MONTH( MAX(orderDate))
+   			 FROM orders )
+             AND YEAR(orderDate ) = (SELECT YEAR(MAX(orderDate)) FROM orders)
+
+//cau3
+SELECT o.orderNumber, o.status ,
+				(SELECT SUM(quantityOrdered * priceEach)
+                  FROM orderdetails
+               	  WHERE orderNumber = o.orderNumber) AS totalValue
+FROM orders o
+
+//cau4
+
+SELECT c.customerName, 
+			( SELECT SUM(amount)
+               FROM payments 
+             	WHERE customerNumber = c.customerNumber
+												) AS totalPaid, 
+              ( SELECT SUM(quantityOrdered * priceEach)
+               FROM orderdetails
+               WHERE orderNumber IN (
+               SELECT orderNumber
+                   FROM orders
+                   WHERE customerNumber = c.customerNumber
+               )
+              ) AS totalPurchased,
+              (SELECT totalPurchased - totalPaid ) AS totalDebt,
+              
+              
+  ( SELECT SUM(quantityOrdered * priceEach)
+               FROM orderdetails
+               WHERE orderNumber IN (
+               SELECT orderNumber
+                   FROM orders
+                   WHERE customerNumber = c.customerNumber
+                   AND status = 'cancelled'
+               )           )
+ AS totalCancel
+ 
+
+FROM customers c
+HAVING totalDebt > 0
+
+
+//cau1de3
+
+SELECT c.customerName, (SELECT DATEDIFF ('2005/06/02' , MAX(orderDate))
+	FROM orders 
+    WHERE customerNumber = c.customerNumber )  AS Recency,
+    (SELECT COUNT(*) FROM orders WHERE customerNumber  = c.customerNumber) AS Frequency
+
+FROM customers c

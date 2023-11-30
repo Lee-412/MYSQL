@@ -1,0 +1,45 @@
+Cau3:
+SELECT pl.productLine,
+	(SELECT SUM(products.quantityInStock)
+    FROM products
+    WHERE products.productLine = pl.productLine) AS totalInStock,
+    (SELECT SUM(orderdetails.quantityOrdered)
+    FROM orderdetails
+    WHERE productCode IN (SELECT productCode
+                        FROM products
+                        WHERE productLine = pl.productLine)
+    ) AS totalSold,
+    (SELECT totalInStock + totalSold) AS totalQuantity
+FROM productlines pl
+
+Cau3.2
+SELECT pl.productLine,
+	(SELECT SUM(products.quantityInStock)
+    FROM products
+    WHERE products.productLine = pl.productLine) AS totalInStock,
+    (SELECT SUM(orderdetails.quantityOrdered)
+    FROM orderdetails
+    WHERE productCode IN (SELECT productCode
+                        FROM products
+                        WHERE productLine = pl.productLine)
+    ) AS totalSold,
+    (SELECT SUM(orderdetails.quantityOrdered)
+    FROM orderdetails
+    WHERE productCode IN (SELECT productCode
+                        FROM products
+                        WHERE productLine = pl.productLine) AND 
+    			(orderNumber IN(SELECT orderNumber
+                               FROM orders
+                               WHERE status = "Cancelled"))
+    ) AS totalCancelled,
+    (SELECT totalInStock + totalSold) AS totalQuantity
+FROM productlines pl
+
+Cau6
+SELECT pl.productLine,
+(SELECT SUM(quantityInStock * buyPrice)
+FROM products
+ WHERE pl.productLine = productLine
+ ) AS totalInStock
+ FROM productlines pl
+ 

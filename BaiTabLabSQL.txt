@@ -1,0 +1,426 @@
+Câu hỏi lab3
+
+	1.Get a list of employees with unspecified reportsTo field (lấy ra danh sách nhân viên có reportsTo không xác định)
+		SELECT  *
+		FROM employees
+		WHERE reportsTo IS NULL
+	2.Get a list of CustomerNumber that has made transactions. (lấy ra danh sách Số mã khách hàng đã thực hiện transactions)
+		SELECT DISTINCT orders.customerNumber
+		FROM orders JOIN  orderdetails 
+			ON orders.orderNumber = orderdetails.orderNumber
+
+		hoặc
+
+		SELECT DISTINCT customerNumber
+		FROM orders
+		WHERE orderNumber IS NOT NULL
+
+	3.Get a list of orders that have shipped on 18 Jan, 2003.(Lấy ra danh sách đơn hàng có ngày ship 18 tháng 1 năm 2003)
+
+		SELECT *
+		FROM orders
+		WHERE shippedDate = '2003-01-18'
+		=> Kết quả 0
+
+		c2:
+		SELECT *
+		FROM orders
+		WHERE YEAR(shippedDate) = '2003' AND MONTH(shippedDate) = '01' AND DAY(shippedDate) = '10'
+
+	4.. Get a list of orders with the date placed in April 2005 and have status of ‘Shipped’.(đơn hàng thuộc tháng 4 năm 2005 và đã vận chuyển)
+
+		SELECT *
+		FROM orders
+		WHERE YEAR(shippedDate) = '2005' AND MONTH(shippedDate) = '04' AND status = 'Shipped' 
+		
+		C2:
+		SELECT *
+		FROM orders
+		WHERE shippedDate >= '2005-04-01' AND shippedDate <= '2005-04-30' AND status = 'Shipped' 
+
+		kết quả: 10
+		
+
+	5.. Get a list of products that are in the ‘Classic Cars’ category.(lấy ra các sản phẩm thuộc Classic cars)
+		SELECT *
+		FROM products
+		WHERE productLine = 'Classic Cars'
+		c2: sử dụng IN của lab4
+		
+		SELECT DISTINCT *
+		FROM products
+		WHERE productLine IN('Classic Cars');
+
+----------------------------------------------------------------------------------
+
+Câu hỏi LAB4
+
+	cau1: Use the IN operator to find customers living in Nantes and Lyon. Write another way
+using the OR operator. (Sử dụng toán tử IN, trả về khách hàng sống ở Nantes và Lyon)
+
+	c1: IN
+	SELECT *
+	FROM customers
+	WHERE city IN ('Nantes',' Lyon')
+	kết quả 2
+
+	c2: OR
+	SELECT *
+	FROM customers
+	WHERE city = 'Nantes' OR city = 'Lyon'
+	kết quả: 2'
+
+	cau2: Use BETWEEN to find orders shipped between January 10, 2003 and March 10, 2003.
+Write another way using the AND operato
+	(Dùng BETWEEN và AND, tìm ra các đơn được ship từ 10/1 đến 10/3 năm 2003)
+
+	c1: BETWEEN
+	SELECT *
+	FROM orders
+	WHERE orders.shippedDate BETWEEN '2003-01-10' AND '2003-03-10' AND orders.status = 'Shipped'
+	kết quả: 9	
+
+	c2: AND
+	SELECT *
+	FROM orders
+	WHERE orders.shippedDate >= '2003-01-10' AND orders.shippedDate <= '2003-03-10' AND orders.status = 'Shipped'
+	kết quả: 9
+
+
+	cau3:Use LIKE to get product lines that its name contain the word ‘CARS’.
+	(dùng LIKE trả về những dòng sản phẩm có name chứa CARS)
+	SELECT *
+	FROM products
+	WHERE products.productLine LIKE '%CARS%'
+
+	kết quả 68
+	
+	câu 4: Get 10 products with the largest quantity in stock.
+	(trả về 10 đơn hàng có Số lượng tồn kho lớn nhất)
+
+	SELECT *
+	FROM products
+	ORDER BY products.quantityInStock DESC
+	LIMIT 10;
+	Kết quả 10.
+----------------------------------------------------------------------------------
+
+Câu hỏi lab5
+	cau1: . Get the first 50 characters of the product description, naming it ‘Title of products’.
+	(lấy ra 50 kí tự đầu tiên của phần Description, đổi tên là Title)
+	SELECT SUBSTRING(productDescription,1,50) AS Titleofproducts
+	FROM products;
+	kết quả:110
+
+	cau2: Get the descriptions of employees in the format ‘Fullname, jobTitle’
+	(lấy ra thông tin của nhân viên theo format)
+	SELECT CONCAT(employees.firstName , ' ' , employees.lastName) AS fullName,
+	jobTitle
+	FROM employees;
+
+	cau3: Update the employees’ information whose jobTitle is ‘Sales Rep’ to ‘Sales Representative’.
+	(thay đổi trong bảng nhân viên, Sales Rep thành Sales Represebtative)
+
+	UPDATE employees 
+	SET employees.jobTitle = 
+	REPLACE(employees.jobTitle, 'Sales Rep', 'Sales Representative');
+	
+	cau4:Get 5 orders shipped sooner than the required date
+	( 5 đơn hàng được ship sớm hơn ngày yêu cầu)
+	SELECT *
+	FROM orders
+	WHERE orders.shippedDate <= ADDDATE(orders.requiredDate,INTERVAL 0 DAY)
+	ORDER BY orders.shippedDate DESC
+	LIMIT 5 ;	
+
+	cau5: 5. Get the orders in May 2005 with an unspecified shipped date.
+	(Những đơn hàng tháng  nam 2005 có ngày ship ko xác định)
+	 
+	SELECT *
+	FROM orders
+	WHERE orders.shippedDate IS NULL AND orders.orderDate BETWEEN '2005-05-01' AND '2005-05-31'
+
+----------------------------------------------------------------------------------
+câu hỏi LAB 6
+	cau1: Get the names of the cities and the number of customers in each city
+	(lấy ra tên và số lượng nhân viên của thành phố)
+	
+	SELECT customers.city,
+		COUNT(customers.customerNumber)
+	FROM customers
+	GROUP BY customers.city;	
+
+	cau2: Get the number of orders in March 2005. Get the number of orders for each month in
+	2005. (Lấy ra số lượng đặt hàng tháng 3 năm 2005 , lấy ra số lượng đặt hàng các tháng năm 2005)
+	
+	tất cả
+	(SELECT	MONTH(orderDate),
+	COUNT(*)
+	FROM orders
+	WHERE orders.orderDate BETWEEN '2005-01-01' AND '2005-12-01' 
+	GROUP BY MONTH(orders.orderDate))
+
+	tháng 3
+	(SELECT COUNT(*)
+    	FROM orders	
+    	WHERE orders.orderDate BETWEEN '2005-03-01' AND '2005-03-31'  ) 	
+	
+	câu3: Get the 10 order numbers that have the most valuable price
+	(10 đơn hàng có giá trị cao nhất)
+	
+	SELECT  orderdetails.orderNumber,
+	SUM(orderdetails.quantityOrdered * orderdetails.priceEach) AS valuablePrice
+	FROM orderdetails
+	GROUP BY orderdetails.orderNumber
+	ORDER BY SUM(orderdetails.quantityOrdered * orderdetails.priceEach)  DESC
+	LIMIT 10
+	kết quả 10
+
+	cau4: Get the product line and the total quantity in stock of that group.
+	(lấy ra dòng sản phẩm và tổng số lượng tồn kho theo từng dòng)
+
+	SELECT products.productLine,
+		COUNT(products.quantityInStock) AS totalInStock
+	FROM products
+	GROUP BY products.productLine
+
+	kết quả: 7
+	
+	cau5: . Get the customer number and the total amount that customer paid
+	(Lấy ra mã khách hàng và giá trị người đó đã thanh toán)
+	
+	SELECT payments.customerNumber,
+		SUM(payments.amount)
+	FROM payments
+	GROUP BY payments.customerNumber
+	kết quả 98
+----------------------------------------------------------------------------------
+câu hỏi lab7
+	cau1: Get the information about the employees and the office where they work
+	(Lấy thông tin về nhân viên và văn phòng họ làm việc)
+	
+	c1: JOIN 
+
+	SELECT e.employeeNumber,
+		CONCAT(e.firstName, ' ', e.lastName) AS Employees,
+	        o.addressLine1,
+	        o.addressLine2,
+        	o.city
+	FROM employees e JOIN offices o ON e.officeCode = o.officeCode
+	GROUP BY e.employeeNumber
+	
+	c2: SubQuery
+	
+	SELECT e.employeeNumber,
+		CONCAT(e.firstName, ' ', e.lastName) AS Employees,
+
+     		 (SELECT offices.addressLine1
+      		FROM offices
+    		  WHERE e.officeCode = offices.officeCode) AS addLine1,
+
+    	  	(SELECT offices.addressLine2
+  		 FROM offices
+   	   	WHERE e.officeCode = offices.officeCode) AS addLine2,
+
+   	   	(SELECT city
+  	    	FROM offices
+  	    	WHERE e.officeCode = offices.officeCode) AS city
+
+	FROM employees e
+	GROUP BY e.employeeNumber
+
+	cau2: Get the information about the items that noone has ordered.
+	(Thông tin những sản phẩm chưa có ai đặt hàng)
+	
+	c1: JOIN
+
+	SELECT *
+	FROM products p LEFT JOIN orderdetails od ON p.productCode = od.productCode
+	WHERE od.productCode IS NULL
+	KQ: 1
+
+	c2: SubQuery
+	SELECT *
+	FROM products p
+	WHERE p.productCode NOT IN 
+		(SELECT od.productCode
+   	   	FROM orderdetails od               
+   		)
+	KQ: 1
+
+	cau3:  Get the information about orders in March 2003 (including orderDate, requiredDate,Status) and total value of orders
+	(Thông tin của các đơn hàng tháng 3 năm 2003: Gồm orderDate, requiredDate,Status và tổng giá trị của đơn hàng)
+
+	c1: JOIN
+	SELECT 	o.orderNumber,
+		o.orderDate,
+        	o.requiredDate,
+       	 SUM(od.quantityOrdered * od.priceEach) AS total
+	FROM orders o JOIN orderdetails od
+	ON o.orderNumber = od.orderNumber
+	WHERE o.orderDate BETWEEN '2003-03-01' AND '2003-03-31'
+	GROUP BY o.orderNumber
+	
+	kết quả:6
+
+	c2: SubQuery
+	
+	SELECT 	o.orderNumber,
+		o.orderDate,
+        	o.requiredDate,
+       	 	(SELECT SUM(orderdetails.quantityOrdered * orderdetails.priceEach)
+       	 	FROM orderdetails 
+        WHERE o.orderNumber = orderdetails.orderNumber) AS total
+	FROM orders o 
+	WHERE o.orderDate BETWEEN '2003-03-01' AND '2003-03-31'
+	GROUP BY o.orderNumber
+	
+	kết quả: 6
+	
+	cau4: Get the information about the product lines and the total number of products of that product line, arranged in descending order of quantity.
+	(Lấy thông tin sản phẩm và tổng số lượng của sản phẩm, sắp xếp theo số lượng giảm dần)
+
+	c1: JOIN
+
+	SELECT 	p.productCode,
+		p.productName,
+       	 	p.productLine,
+       	 	SUM(p.quantityInStock + IF(od.quantityOrdered IS NOT NULL, od.quantityOrdered,0)) AS totalOfProducts
+	FROM products p  LEFT JOIN  orderdetails od
+	ON p.productCode = od.productCode
+	GROUP BY p.productCode;
+	Kết quả 110
+	
+	c2: SubQuery
+
+	SELECT  p.productCode,
+    		p.productName,
+    		p.productLine,
+    		SUM(p.quantityInStock + IF(sub.totalQuantityOrdered IS NOT NULL,sub.totalQuantityOrdered ,0)) AS totalOfProducts
+	FROM 	products p LEFT JOIN (
+    			SELECT 	productCode,
+       				SUM(quantityOrdered) AS totalQuantityOrdered
+   		 	FROM  orderdetails
+			) sub ON p.productCode = sub.productCode
+	GROUP BY p.productCode;
+
+	caua5: Get the name of the customer and the total amount they purchased.
+	(Lấy ra tên khách hàng và tổng số tiền họ đã mua)
+
+	c1: JOIN
+
+	SELECT 	c.customerNumber,
+		c.customerName,
+        SUM(IF(od.quantityOrdered IS NOT NULL, od.quantityOrdered,0) * IF(od.priceEach IS NOT NULL ,od.priceEach,0)) AS totalAmountPur
+	FROM customers c LEFT JOIN orders o ON c.customerNumber = o.customerNumber
+	LEFT JOIN orderdetails od ON o.orderNumber = od.orderNumber
+
+	GROUP BY c.customerNumber
+
+	kết quả: 122
+
+	c2: SubQuery
+
+	SELECT 	c.customerNumber,
+		c.customerName,
+        IF((SELECT SUM( od.quantityOrdered  *od.priceEach )
+         FROM orderdetails od
+         WHERE od.orderNumber IN( 
+         	SELECT o.orderNumber
+             FROM orders o
+             WHERE o.customerNumber = c.customerNumber
+         	)
+        ) IS NOT NULL, (SELECT SUM( od.quantityOrdered  *od.priceEach )
+         FROM orderdetails od
+         WHERE od.orderNumber IN( 
+         	SELECT o.orderNumber
+             FROM orders o
+             WHERE o.customerNumber = c.customerNumber
+         	)
+        ), 0)
+        AS totalAmountPur
+        
+FROM customers c 
+GROUP BY c.customerNumber
+	kết quả: 122
+----------------------------------------------------------------------------------
+câu hỏi lab8
+	cau1:Use the subquery to list products that were ordered in March 2005
+	(các đơn hàng tháng 3 năm 2005)
+
+	(Thông tin của các đơn hàng tháng 3 năm 2003: Gồm orderDate, requiredDate,Status và tổng giá trị của đơn hàng)
+
+	c1: JOIN
+	SELECT 	o.orderNumber,
+		o.orderDate,
+        	o.requiredDate,
+       	 SUM(od.quantityOrdered * od.priceEach) AS total
+	FROM orders o JOIN orderdetails od
+	ON o.orderNumber = od.orderNumber
+	WHERE o.orderDate BETWEEN '2005-03-01' AND '2005-03-31'
+	GROUP BY o.orderNumber
+	
+	kết quả:13
+
+	c2: SubQuery
+	
+	SELECT 	o.orderNumber,
+		o.orderDate,
+        	o.requiredDate,
+       	 	(SELECT SUM(orderdetails.quantityOrdered * orderdetails.priceEach)
+       	 	FROM orderdetails 
+        WHERE o.orderNumber = orderdetails.orderNumber) AS total
+	FROM orders o 
+	WHERE o.orderDate BETWEEN '2005-03-01' AND '2005-03-31'
+	GROUP BY o.orderNumber
+	
+	kết quả 13
+
+	cau2:Use the subquery to display information about orders in the most recent month (using information from the orders table).
+	(Thông tin về tháng gần đây nhất)
+
+	SELECT *
+	FROM orders
+	WHERE MONTH(orders.orderDate) = (
+		SELECT MONTH(MAX(o.orderDate))
+   	 	FROM orders o
+		);
+	
+	cau3:Use subqueries to give information about orders and total value of this order (using
+information from orders and orderdetails tables).
+	(Sử dụng truy vấn con lấy thông tin về đơn hàng và tổng giá trị của đơn hàng đó)
+
+	SELECT 	o.orderNumber,
+		o.orderDate,
+        	o.requiredDate,
+        	o.shippedDate,
+        	(SELECT SUM(od.quantityOrdered * od.priceEach)
+       	 	FROM orderdetails od
+        	WHERE o.orderNumber = od.orderNumber) AS totalValue
+	FROM orders o
+	ORDER BY o.orderNumber
+
+	cau4:Use the subquery get the customer's name and the total amount they have to pay
+	(Lấy ra tên khách hàng và tổng số tiền họ phải trả)
+
+	c1: JOIN
+
+	SELECT 	c.customerNumber,
+		c.customerName,
+        	SUM(pm.amount) AS totalAmount
+	FROM customers c LEFT JOIN payments pm 
+	ON c.customerNumber = pm.customerNumber
+	GROUP BY c.customerNumber
+
+	kết quả: 122
+
+	c2: SubQuery
+	
+	SELECT 	c.customerNumber,
+		c.customerName,
+       		( SELECT SUM(pm.amount)
+      	 	  FROM payments pm
+       	 	  WHERE pm.customerNumber = c.customerNumber
+       		) AS totalAmount
+	FROM customers c 
+	GROUP BY c.customerNumber

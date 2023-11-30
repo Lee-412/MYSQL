@@ -1,0 +1,54 @@
+SELECT c.customerNumber, c.customerName, o.orderNumber
+FROM customers c INNER JOIN orders o on c.customerNumber = o.customerNumber
+ORDER BY c.customerNumber;
+
+SELECT c.customerNumber, c.customerName, SUM(od.quantityOrdered * od.priceEach) AS total
+FROM customers c , orders o, orderdetails od
+WHERE c.customerNumber = o.customerNumber AND od.orderNumber = o.orderNumber
+ORDER BY c.customerNumber;
+
+SELECT c.customerNumber, c.customerName, o.orderNumber
+FROM customers c LEFT JOIN orders o on c.customerNumber = o.customerNumber
+ORDER BY c.customerNumber
+
+SELECT c.customerNumber, c.customerName, SUM(o.orderNumber)
+FROM customers c LEFT JOIN orders o on c.customerNumber = o.customerNumber
+GROUP  BY c.customerNumber
+ORDER BY c.customerNumber
+
+SELECT c.customerNumber, c.customerName,
+IF(SUM(od.quantityOrdered * od.priceEach) IS NULL, 0, SUM(od.quantityOrdered * od.priceEach))  AS total
+FROM customers c LEFT JOIN orders o on c.customerNumber = o.customerNumber
+LEFT JOIN orderdetails od ON od.orderNumber = o.orderNumber
+GROUP BY c.customerNumber
+
+
+//cau1
+SELECT e.firstName, e.lastName, o.addressLine1, o.addressLine2, o.city, o.country
+FROM employees e INNER JOIN offices o 
+ON e.officeCode = o.officeCode
+
+//cau2
+SELECT p.productCode, p.productName
+FROM orderdetails od
+RIGHT JOIN products p ON od.productCode = p.productCode
+WHERE od.quantityOrdered IS NULL;
+
+//cau3
+SELECT o.orderNumber, o.shippedDate,o.requiredDate,o.orderDate,o.status, SUM(od.quantityOrdered * od.priceEach)
+FROM orders o INNER JOIN orderdetails od ON o.orderNumber = od.orderNumber
+WHERE o.orderDate >= '2003-03-01' AND  o.orderDate <= '2003-03-31'
+GROUP BY o.orderNumber
+
+//cau4
+SELECT p.productLine, SUM(od.quantityOrdered) totalOrdered, SUM(od.quantityOrdered * od.priceEach) totalValue
+FROM products p INNER JOIN orderdetails od 
+ON p.productCode = od.productCode
+GROUP BY p.productLine
+ORDER BY totalOrdered DESC
+
+//cau5
+SELECT c.customerNumber, c.customerName, SUM(p.amount) AS total
+FROM customers c LEFT JOIN payments p 
+ON c.customerNumber = p.customerNumber
+GROUP BY c.customerNumber

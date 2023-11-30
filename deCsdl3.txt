@@ -1,0 +1,37 @@
+Q1:
+
+SELECT customerNumber, (SELECT customerName FROM customers WHERE customerNumber = orders.customerNumber) AS CustomerName, DATEDIFF('2005-06-02', MAX(orderDate)) AS Recency,
+COUNT(*) AS Frequency, (SELECT SUM(amount) FROM payments WHERE customerNumber = orders.customerNumber) AS Monetary
+FROM orders
+GROUP BY customerNumber;
+
+Q2:
+
+SELECT customerNumber, (SELECT customerName FROM customers WHERE customerNumber = orders.customerNumber) AS CustomerName, DATEDIFF('2005-06-02', MAX(orderDate)) AS Recency,
+COUNT(*) AS Frequency, (SELECT SUM(amount) FROM payments WHERE customerNumber = orders.customerNumber) AS Monetary
+FROM orders
+GROUP BY customerNumber
+HAVING (Recency <= 5 AND Frequency >=5) OR Monetary >= 500000
+
+Q3:
+
+SELECT products.productLine, SUM(quantityInStock + quantityOrdered) AS quantityProducts, textDescription
+FROM products
+JOIN orderDetails ON products.productCode = orderDetails.productCode
+JOIN productLines ON products.productLine = productLines.productLine
+GROUP BY products.productLine
+HAVING quantityProducts > 50000
+ORDER BY quantityProducts DESC;
+
+Q4:
+
+
+
+Q5:
+
+Q6:
+
+SELECT productLines.*, SUM(quantityInStock * buyPrice) AS InventoryMoney
+FROM products
+JOIN productLines ON products.productLine = productLines.productLine
+GROUP BY productLine;

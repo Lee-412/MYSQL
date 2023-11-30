@@ -1,0 +1,870 @@
+Lab1
+
+Tạo: CREATE DATABASE test5;
+Xóa: DROP DATABASE test5;
+Tạo bảng:
+	CREATE TABLE Listname( 
+		STT INT PRIMARY KEY, 
+		name VARCHAR(255) NOT NULL, 
+		age INT );
+
+	
+	CREATE TABLE + tên bảng(
+	tên cột + kiểu dữ liệu + đặc điểm.
+)
+Lab2: Tạo bảng, và thao tác liên kết khóa
+
+Cài đặt liên kết khóa: 
+ALTER TABLE products 
+	ADD CONSTRAINT fk_products_productsLine 
+	FOREIGN KEY (productLine) REFERENCES productlines(productLine);
+
+Lab3 Truy vấn cơ bản (BASIC QUERIES)
+SELECT: chọn tài liệu in ra
+ex:
+	SELECT *
+	FROM orders
+
+WHERE : Điều kiện  lọc, có thể kết hợp với AND OR
+VD 
+	SELECT *
+	FROM orders
+	WHERE orders.orderNumber = 10100 OR orders.orderNumber = 10101
+
+DISTINCT: Lọc trùng lặp
+ex
+
+	SELECT DISTINCT *
+	FROM orders
+
+	SELECT DISTINCT jobTitle 
+	FROM employees;
+
+LIMIT: Giới hạn số lượng bản ghi trả về
+ex
+	SELECT *
+	FROM customers
+	WHERE country = 'France'
+	LIMIT 10;
+
+
+IS NULL: Tìm kiếm giá trị null
+ko sử dụng so sánh bằng dấu  = ;
+
+ex
+	SELECT *
+	FROM orders
+	WHERE comments IS NULL;
+
+
+
+Thứ tự cú pháp
+SELECT
+FROM
+WHERE
+GROUP BY
+HAVING
+ORDER BY
+LIMIT
+
+Câu hỏi lab3
+
+	1.Get a list of employees with unspecified reportsTo field (lấy ra danh sách nhân viên có reportsTo không xác định)
+		SELECT  *
+		FROM employees
+		WHERE reportsTo IS NULL
+	2.Get a list of CustomerNumber that has made transactions. (lấy ra danh sách Số mã khách hàng đã thực hiện transactions)
+		SELECT DISTINCT orders.customerNumber
+		FROM orders JOIN  orderdetails 
+			ON orders.orderNumber = orderdetails.orderNumber
+
+		hoặc
+
+		SELECT DISTINCT customerNumber
+		FROM orders
+		WHERE orderNumber IS NOT NULL
+
+	3.Get a list of orders that have shipped on 18 Jan, 2003.(Lấy ra danh sách đơn hàng có ngày ship 18 tháng 1 năm 2003)
+
+		SELECT *
+		FROM orders
+		WHERE shippedDate = '2003-01-18'
+		=> Kết quả 0
+
+		c2:
+		SELECT *
+		FROM orders
+		WHERE YEAR(shippedDate) = '2003' AND MONTH(shippedDate) = '01' AND DAY(shippedDate) = '10'
+
+	4.. Get a list of orders with the date placed in April 2005 and have status of ‘Shipped’.(đơn hàng thuộc tháng 4 năm 2005 và đã vận chuyển)
+
+		SELECT *
+		FROM orders
+		WHERE YEAR(shippedDate) = '2005' AND MONTH(shippedDate) = '04' AND status = 'Shipped' 
+		
+		C2:
+		SELECT *
+		FROM orders
+		WHERE shippedDate >= '2005-04-01' AND shippedDate <= '2005-04-30' AND status = 'Shipped' 
+
+		kết quả: 10
+		
+
+	5.. Get a list of products that are in the ‘Classic Cars’ category.(lấy ra các sản phẩm thuộc Classic cars)
+		SELECT *
+		FROM products
+		WHERE productLine = 'Classic Cars'
+		c2: sử dụng IN của lab4
+		
+		SELECT DISTINCT *
+		FROM products
+		WHERE productLine IN('Classic Cars');
+
+lab4 BASIC QUERIES (PART 2) (truy vấn cơ bản phần 2)
+IN: đưa ra giá trị của một phần tử thuộc tập giá trị nào đó, Kết hợp với WHERE, Truy vấn con v.v
+	=>> sử dụng thay cho toán tử OR, có thể dùng NOT để phủ định điều kiện
+	ex
+	SELECT DISTINCT *
+	FROM products
+	WHERE productLine IN('Classic Cars');
+
+	=>> bt 5 lab3
+	
+	SELECT officeCode, city, phone
+	FROM offices
+	WHERE country = 'USA' OR country = 'France';
+	
+	tương tự	
+
+	SELECT officeCode, city, phone
+	FROM offices
+	WHERE country IN ('USA','France');
+	
+	toán tử NOT	
+
+	SELECT officeCode, city, phone
+	FROM offices
+	WHERE country NOT IN ('USA','France')
+	
+
+BETWEEN : Đưa ra kết quả trong một phạm vi cụ thể, ví dụ bt4 lab 3
+	=>> có thể sử dụng toán tử NOT giống IN để phủ định
+		NOT BETWEEN
+
+	ex
+	SELECT *
+	FROM orders
+	WHERE shippedDate BETWEEN '2005-04-01' AND  '2005-04-30' AND status = 'Shipped' 
+
+	kết quả: 10
+
+ORDER BY: Sắp xếp kết quả theo thứ tự giảm dần (DESC) hoặc tăng dần (ASC).
+	nếu gọi ORDER BY mà ko kèm kiểu sắp xếp. mặc định sẽ là tăng dẫn (ASC) 
+	
+	ex:
+	SELECT productCode, productName, (quantityInStock * buyPrice ) AS total
+	FROM products
+	//GROUP BY productCode
+	ORDER BY total DESC
+
+	tùy điều kiện, mục đích, có thể sử dụng gom nhóm (GROUP BY) hoặc không
+
+Derived Attribute : thuộc tính dẫn xuất hay các thuộc tính phát sinh khi sử dụng kết hợp các toán tử, hàm truy vấn. không được sử dụng trực tiếp trong các câu truy vấn khác, có thể đổi tên cột bằng  hàm AS	
+
+	ex	
+	SELECT orderNumber, (priceEach*quantityOrdered) as lineTotal
+	FROM orderdetails;
+
+	ex
+	SELECT productCode, productName, (quantityInStock * buyPrice ) AS total
+	FROM products
+
+LIKE: Toán tử truy vấn, đại diện cho truy xuất kết quả có đặc điểm của LIKE đưa ra
+	Đặc trưng bởi:	% : đại diện cho bất kì chữ hoặc nhóm chữ nào
+				LIKE 'X%'  => bắt đầu bằng X
+				LIKE '%X'  => kết thúc bằng X
+				LIKE '%X%' => trong chuỗi có X
+				
+				X có thể là chữ hoặc số, hoặc cụm chữ, cụm số
+
+			_ : đại diện cho 1 kí tự 
+				
+				LIKE '_' => chỉ chứa 1 kí tự
+				LIKE '_00%' Bắt đầu bằng chuỗi X00
+				
+				v.v
+	ex
+	SELECT *
+	FROM customers
+	WHERE customers.customerName LIKE 'A%'
+	
+	kết quả 16
+
+	SELECT *
+	FROM customers
+	WHERE customers.customerName LIKE '_A%'
+	
+	kí tự thứ 2 là A
+
+	kết quả 20;
+
+
+UNION: Thực hiện nối kết quả của 2 truy vấn vào chung 1 bảng để hiển thị
+	-,Thỏa mãn yêu cầu sau
+		+, Số lượng cột in ra trong các truy vấn là giống nhau
+		+, Miền giá trị của các cột tương ứng trong các truy vấn là giống nhau, hoặc có thể chuyển đổi qua lại với nhau
+	
+	-, Mặc định, nếu không sử dụng DISTINCT, Kết quả trả về của phép UNION cũng tự động loại bỏ các hàm trùng lặp
+	-, Sử dụng UNION ALL để giữ lại các hàm trùng lặp tùy mục đích
+	-, Lưu ý, khi muốn dùng ORDER BY, phải thực hiện UNION xong mới ORDER BY, (vd 2)
+
+	-, Nếu tên cột không giống nhau, phép UNION mặc định sẽ chọn tên cột của phép Select đầu tiên để đặt tên
+
+	ex
+	SELECT customerNumber  AS id, contactLastname AS name
+	FROM customers
+	UNION
+	SELECT employeeNumber AS id, lastName AS name
+	FROM employees;
+
+
+	ex2
+	(SELECT customerNumber, contactLastname
+	FROM customers)
+	UNION
+	(SELECT employeeNumber, firstname
+	FROM employees)
+	ORDER BY contactLastname, customerNumber;
+
+Câu hỏi LAB4
+
+	cau1: Use the IN operator to find customers living in Nantes and Lyon. Write another way
+using the OR operator. (Sử dụng toán tử IN, trả về khách hàng sống ở Nantes và Lyon)
+
+	c1: IN
+	SELECT *
+	FROM customers
+	WHERE city IN ('Nantes',' Lyon')
+	kết quả 2
+
+	c2: OR
+	SELECT *
+	FROM customers
+	WHERE city = 'Nantes' OR city = 'Lyon'
+	kết quả: 2'
+
+	cau2: Use BETWEEN to find orders shipped between January 10, 2003 and March 10, 2003.
+Write another way using the AND operato
+	(Dùng BETWEEN và AND, tìm ra các đơn được ship từ 10/1 đến 10/3 năm 2003)
+
+	c1: BETWEEN
+	SELECT *
+	FROM orders
+	WHERE orders.shippedDate BETWEEN '2003-01-10' AND '2003-03-10' AND orders.status = 'Shipped'
+	kết quả: 9	
+
+	c2: AND
+	SELECT *
+	FROM orders
+	WHERE orders.shippedDate >= '2003-01-10' AND orders.shippedDate <= '2003-03-10' AND orders.status = 'Shipped'
+	kết quả: 9
+
+
+	cau3:Use LIKE to get product lines that its name contain the word ‘CARS’.
+	(dùng LIKE trả về những dòng sản phẩm có name chứa CARS)
+	SELECT *
+	FROM products
+	WHERE products.productLine LIKE '%CARS%'
+
+	kết quả 68
+	
+	câu 4: Get 10 products with the largest quantity in stock.
+	(trả về 10 đơn hàng có Số lượng tồn kho lớn nhất)
+
+	SELECT *
+	FROM products
+	ORDER BY products.quantityInStock DESC
+	LIMIT 10;
+	Kết quả 10.
+
+LAB5: COMMON FUNCTIONS IN MYSQL (Chức năng chung)
+
+SUBSTRING: Trả về một chuỗi con
+ trong chuỗi str bắt đầu từ 1 vị trí cụ thể (pos) , bao nhiêu kí tự (len);
+	SUBSTRING(str, pos);
+	SUBSTRING(str, pos, len);
+
+CONCAT:	 Nối hai hoặc nhiều chuỗi với nhau.
+	-, nếu bất kì chuỗi con nào NULL -=> NULL
+	CONCAT(str1,str2,...)
+
+	ex
+	SELECT CONCAT(contactLastname,', ',contactFirstname)
+	AS fullname
+	FROM customers
+
+CONCAT_WS: sử dụng để nối các chuỗi với kí tự phân cách cho trước (seperator)
+	CONCAT_WS(seperator,str1,str2,...)
+	ex
+	SELECT CONCAT_WS('; ',contactLastname,contactFirstname)
+	AS fullname	
+	FROM customers	
+
+REPLACE: Thay thế một chuỗi thành chuỗi mới, kết hợp câu lệnh SET UPDATE;
+	-, Lưu ý, có phân biệt chữ hoa, chữ thường	
+	system
+	UPDATE <tên bảng>
+	SET tên cột = REPLACE(tên cột,xâu cần tìm,xâu thay thế)
+	WHERE <các điều kiện>
+	
+	ex
+	UPDATE products
+	SET productDescription =	
+	REPLACE(productDescription,'abuot','about')
+
+IF:	Trả về truy vấn theo điều kiện của hàm IF 
+	-, expr : cấu trúc so sánh, điều kiện
+	-, if_true_expr: kết quả trả về nếu expr đúng
+	-, if_false_expr: kết quả trả về nếu expr sai	
+	IF(expr,if_true_expr,if_false_expr)
+
+	ex
+	SELECT customerNumber,
+	 customerName,
+	 IF(state IS NULL,'N/A',state) state,
+	 country
+	FROM customers;	
+
+	ex: kết họp hàm IF với các hàm tính toán
+	SELECT SUM(IF(status = 'Shipped',1,0)) AS Shipped,
+	SUM(IF(status = 'Cancelled',1,0)) AS Cancelled
+	FROM orders;
+	
+LAST_INSERT_ID: Hàm LAST_INSERT_ID trả về ID của bản ghi cuối cùng được chèn vào bảng, với điều
+kiện đólà ID của cột có thuộc tính AUTO_INCREMENT.Trong thiết kế cơ sở dữ liệu,
+thường sử dụng một cột tự động tăng AUTO_INCREMENT
+
+Time processing function: các chức năng xử lý thời gian
+DATEDIFF: Trả về khoảng cách thời gian giữa 2 mốc đưa ra
+	system
+	DATEDIFF(expr1,expr2)
+	
+	ex
+	SELECT orderNumber,
+	DATEDIFF(requiredDate,shippedDate) AS daysLeft
+	FROM orders
+	ORDER BY daysLeft DESC;
+
+	
+ADDDATE: Trả về kết quả là giá trị sau khi thao tác trên một thời gian khác
+	+, có thể thay thế INTERVAL 30 DAY thành YEAR hoặc MONTH
+	ex
+	SELECT ADDDATE(NOW(), INTERVAL 30 DAY);  
+	+, NOW(): thời gian hiện tại : có thể thay thế bằng 1 truy vấn thời gian
+	+, INTERVAL 30 DAY: số ngày cộng vào 
+
+	ex
+	SELECT *
+	FROM orders
+	WHERE orderDate>= '2005-5-1' AND orderDate < ADDDATE('2005-
+	5-1', INTERVAL 30 DAY); 
+	
+	ex
+	SELECT *
+	FROM orders
+	WHERE orderDate >= '2005-05-01' AND orderDate <=  ADDDATE('2005-05-01', INTERVAL 30 DAY);
+	
+EXTRACT: Tách ra các giá trị như ngày, tháng, năm từ một giá trị có kiểu thời
+gian.
+	ex
+	SELECT EXTRACT(MONTH FROM '2004-12-31 23:59:59');
+	kết quả: 12
+
+	=> Thay thế MONTH, DAY, YEAR theo mục đích
+
+	ex
+	SELECT *
+	FROM orders
+	WHERE EXTRACT(YEAR FROM orderDate) = 2005 and EXTRACT(MONTH
+	FROM orderDate) = 5; 
+
+Câu hỏi lab5
+	cau1: . Get the first 50 characters of the product description, naming it ‘Title of products’.
+	(lấy ra 50 kí tự đầu tiên của phần Description, đổi tên là Title)
+	SELECT SUBSTRING(productDescription,1,50) AS Titleofproducts
+	FROM products;
+	kết quả:110
+
+	cau2: Get the descriptions of employees in the format ‘Fullname, jobTitle’
+	(lấy ra thông tin của nhân viên theo format)
+	SELECT CONCAT(employees.firstName , ' ' , employees.lastName) AS fullName,
+	jobTitle
+	FROM employees;
+
+	cau3: Update the employees’ information whose jobTitle is ‘Sales Rep’ to ‘Sales Representative’.
+	(thay đổi trong bảng nhân viên, Sales Rep thành Sales Represebtative)
+
+	UPDATE employees 
+	SET employees.jobTitle = 
+	REPLACE(employees.jobTitle, 'Sales Rep', 'Sales Representative');
+	
+	cau4:Get 5 orders shipped sooner than the required date
+	( 5 đơn hàng được ship sớm hơn ngày yêu cầu)
+	SELECT *
+	FROM orders
+	WHERE orders.shippedDate <= ADDDATE(orders.requiredDate,INTERVAL 0 DAY)
+	ORDER BY orders.shippedDate DESC
+	LIMIT 5 ;	
+
+	cau5: 5. Get the orders in May 2005 with an unspecified shipped date.
+	(Những đơn hàng tháng  nam 2005 có ngày ship ko xác định)
+	 
+	SELECT *
+	FROM orders
+	WHERE orders.shippedDate IS NULL AND orders.orderDate BETWEEN '2005-05-01' AND '2005-05-31'
+
+
+Lab6	GROUP QUERIES (Truy vấn nhóm)
+SUM: Tính tổng của một nhóm cơ sở dữ liệu
+	ex
+	SELECT SUM(products.quantityInStock * buyPrice) total
+	FROM products
+
+AVG: Tính giá trị trung bình của một nhóm cơ sở dữ liệu (trong các phần tử thuộc tính, không chưa giá trị NULL)
+	(có thể sử dụng IF để trả về 0 với các giá trị NULL)
+	ex
+	SELECT AVG(products.quantityInStock * buyPrice) total
+	FROM products
+ 
+MAX: 	trả về giá trị Max của một tập giá trị
+MIN:	trả về giá trị Min của một tập giá trị
+	ex
+	SELECT MAX(products.quantityInStock * buyPrice) AS max,
+    	MIN(products.quantityInStock * buyPrice) AS min
+	FROM products
+
+COUNT: Đếm số lượng các hàng có giá trị khác NULL 
+	(Kết hợp truy vấn tùy mục đích)
+	ex
+	SELECT COUNT(products.productCode)
+	FROM products	
+
+GROUP BY: Gom nhóm các bản ghi có cùng một giá trị tại một hoặc nhiều cột thành một tập hợp theo một yêu cầu nào đó, bỏ qua các giá trị NULL
+	system
+
+	SELECT col1_,col_2,... col_n, các hàm nhóm(biểu thức)
+	FROM tên bảng
+	WHERE điều kiện
+	GROUP BY col_1, col_2, ... col_n
+	ORDER BY danh sách cột
+
+	ex
+	SELECT status
+	FROM orders
+	GROUP BY status
+	
+	ex
+	SELECT status, count(*)
+	FROM orders
+	GROUP BY status
+	
+	ex
+	SELECT productCode,sum(priceEach * quantityOrdered) AS total
+	FROM orderdetails
+	GROUP BY productCode
+	HAVING total > 10000
+
+	có GROUP BY kết quả trả về 109 bản kết quả theo từng productCode
+	ko có GROUP BY kết quả trả về 1 bản.
+
+
+HAVING: Hàm điều kiện kết hợp với GROUP BY, sử dụng được cho các bí danh của các giá trị truy vấn trong select
+	(Khi không đi chung với GROUP BY, HAVING có tác dụng như WHERE)
+
+	ex
+	SELECT productCode,sum(priceEach * quantityOrdered) AS total
+	FROM orderdetails
+	GROUP BY productCode
+	HAVING total > 10000
+	kết quả 109 bản
+
+
+câu hỏi LAB 6
+	cau1: Get the names of the cities and the number of customers in each city
+	(lấy ra tên và số lượng nhân viên của thành phố)
+	
+	SELECT customers.city,
+		COUNT(customers.customerNumber)
+	FROM customers
+	GROUP BY customers.city;	
+
+	cau2: Get the number of orders in March 2005. Get the number of orders for each month in
+	2005. (Lấy ra số lượng đặt hàng tháng 3 năm 2005 , lấy ra số lượng đặt hàng các tháng năm 2005)
+	
+	tất cả
+	(SELECT	MONTH(orderDate),
+	COUNT(*)
+	FROM orders
+	WHERE orders.orderDate BETWEEN '2005-01-01' AND '2005-12-01' 
+	GROUP BY MONTH(orders.orderDate))
+
+	tháng 3
+	(SELECT COUNT(*)
+    	FROM orders	
+    	WHERE orders.orderDate BETWEEN '2005-03-01' AND '2005-03-31'  ) 	
+	
+	câu3: Get the 10 order numbers that have the most valuable price
+	(10 đơn hàng có giá trị cao nhất)
+	
+	SELECT  orderdetails.orderNumber,
+	SUM(orderdetails.quantityOrdered * orderdetails.priceEach) AS valuablePrice
+	FROM orderdetails
+	GROUP BY orderdetails.orderNumber
+	ORDER BY SUM(orderdetails.quantityOrdered * orderdetails.priceEach)  DESC
+	LIMIT 10
+	kết quả 10
+
+	cau4: Get the product line and the total quantity in stock of that group.
+	(lấy ra dòng sản phẩm và tổng số lượng tồn kho theo từng dòng)
+
+	SELECT products.productLine,
+		COUNT(products.quantityInStock) AS totalInStock
+	FROM products
+	GROUP BY products.productLine
+
+	kết quả: 7
+	
+	cau5: . Get the customer number and the total amount that customer paid
+	(Lấy ra mã khách hàng và giá trị người đó đã thanh toán)
+	
+	SELECT payments.customerNumber,
+		SUM(payments.amount)
+	FROM payments
+	GROUP BY payments.customerNumber
+	kết quả 98
+
+LAB 7 MYSQL JOIN (Nối bảng)
+INNER JOIN: (Nối trong) có thể nối một hoặc nhiều bảng với bảng chỉnh, đáp ứng điều kiện nối
+	-, Khi nối bảng, muốn tham chiều tới phần tử cột của bảng cần dùng tên bảng (hoặc bí danh) để tham chiếu, tránh trùng dữ liệu
+	-, 
+	ex1
+	SELECT	products.productCode, 
+		products.productName,
+		orderDetails.orderNumber
+	FROM products
+	INNER JOIN orderDetails on products.productCode =
+		orderDetails.productCode;
+
+	ex1: Sử dụng bí danh	
+
+	SELECT p.productCode, p.productName, o.orderNumber
+	FROM products p
+	INNER JOIN orderDetails o on p.productCode = o.productCode;
+	
+	ex2
+	SELECT p.productCode ,
+		SUM(od.quantityOrdered * od.priceEach) as total
+	FROM products p INNER JOIN orderdetails od ON p.productCode = od.productCode
+	GROUP BY p.productCode
+	ORDER BY total
+	
+	ex3
+	SELECT 	c.customerNumber ,
+ 	 	 c.customerName,
+	        SUM(od.quantityOrdered* od.priceEach) AS total
+	FROM customers c 
+		INNER JOIN orders o ON c.customerNumber = o.customerNumber
+		INNER JOIN orderdetails od ON o.orderNumber = od.orderNumber
+	GROUP BY c.customerNumber
+	ORDER BY total;
+	
+	ex3: Sử dụng SUBQUERY
+	SELECT 	c.customerNumber ,
+    		c.customerName,
+         	(SELECT SUM(orderdetails.quantityOrdered*orderdetails.priceEach)
+            	FROM orderdetails 
+            	WHERE orderdetails.orderNumber IN
+           	 	 (SELECT orders.orderNumber
+           	 	  FROM orders
+           	 	 WHERE orders.customerNumber = c.customerNumber)
+          	) AS total
+	FROM customers c 
+	 
+        GROUP BY c.customerNumber
+        HAVING total IS NOT NULL
+	ORDER BY  total;
+
+
+
+	
+LEFT JOIN: Cho phép chọn tất cả các hàng từ bảng bên trái ngay cả khi không
+có bản ghi nào phù hợp với nó trong bảng bên phải.
+(Phù hợp với việc cần lấy tất cả thông tin khách hàng, hoặc đơn hàng mặc dù nó chưa được thanh toán hoặc khách hàng chưa mua bất cứ thứ gì)
+
+RIGHT JOIN: đảo chiều với LEFT JOIN
+
+SELF JOIN: Một phép tự nối là một kiểu nối trong đó một bảng được nối với chính nó, cụ thể khi
+một bảng có một khóa ngoài tham chiếu tới khóa chính của nó
+	(Cần nhiều truy vấn trong 1 bảng)
+	ex
+	SELECT concat (e1.lastName ," ",e1.firstName) as fullname,
+		e1.email, 
+		concat (e2.lastName ," ",e2.firstName) as manager, 
+		e2.email
+	FROM employees e1, employees e2
+	WHERE e1.reportsTo = e2.employeeNumber;
+
+câu hỏi lab7
+	cau1: Get the information about the employees and the office where they work
+	(Lấy thông tin về nhân viên và văn phòng họ làm việc)
+	
+	c1: JOIN 
+
+	SELECT e.employeeNumber,
+		CONCAT(e.firstName, ' ', e.lastName) AS Employees,
+	        o.addressLine1,
+	        o.addressLine2,
+        	o.city
+	FROM employees e JOIN offices o ON e.officeCode = o.officeCode
+	GROUP BY e.employeeNumber
+	
+	c2: SubQuery
+	
+	SELECT e.employeeNumber,
+		CONCAT(e.firstName, ' ', e.lastName) AS Employees,
+
+     		 (SELECT offices.addressLine1
+      		FROM offices
+    		  WHERE e.officeCode = offices.officeCode) AS addLine1,
+
+    	  	(SELECT offices.addressLine2
+  		 FROM offices
+   	   	WHERE e.officeCode = offices.officeCode) AS addLine2,
+
+   	   	(SELECT city
+  	    	FROM offices
+  	    	WHERE e.officeCode = offices.officeCode) AS city
+
+	FROM employees e
+	GROUP BY e.employeeNumber
+
+	cau2: Get the information about the items that noone has ordered.
+	(Thông tin những sản phẩm chưa có ai đặt hàng)
+	
+	c1: JOIN
+
+	SELECT *
+	FROM products p LEFT JOIN orderdetails od ON p.productCode = od.productCode
+	WHERE od.productCode IS NULL
+	KQ: 1
+
+	c2: SubQuery
+	SELECT *
+	FROM products p
+	WHERE p.productCode NOT IN 
+		(SELECT od.productCode
+   	   	FROM orderdetails od               
+   		)
+	KQ: 1
+
+	cau3:  Get the information about orders in March 2003 (including orderDate, requiredDate,Status) and total value of orders
+	(Thông tin của các đơn hàng tháng 3 năm 2003: Gồm orderDate, requiredDate,Status và tổng giá trị của đơn hàng)
+
+	c1: JOIN
+	SELECT 	o.orderNumber,
+		o.orderDate,
+        	o.requiredDate,
+       	 SUM(od.quantityOrdered * od.priceEach) AS total
+	FROM orders o JOIN orderdetails od
+	ON o.orderNumber = od.orderNumber
+	WHERE o.orderDate BETWEEN '2003-03-01' AND '2003-03-31'
+	GROUP BY o.orderNumber
+	
+	kết quả:6
+
+	c2: SubQuery
+	
+	SELECT 	o.orderNumber,
+		o.orderDate,
+        	o.requiredDate,
+       	 	(SELECT SUM(orderdetails.quantityOrdered * orderdetails.priceEach)
+       	 	FROM orderdetails 
+        WHERE o.orderNumber = orderdetails.orderNumber) AS total
+	FROM orders o 
+	WHERE o.orderDate BETWEEN '2003-03-01' AND '2003-03-31'
+	GROUP BY o.orderNumber
+	
+	kết quả: 6
+	
+	cau4: Get the information about the product lines and the total number of products of that product line, arranged in descending order of quantity.
+	(Lấy thông tin sản phẩm và tổng số lượng của sản phẩm, sắp xếp theo số lượng giảm dần)
+
+	c1: JOIN
+
+	SELECT 	p.productCode,
+		p.productName,
+       	 	p.productLine,
+       	 	SUM(p.quantityInStock + IF(od.quantityOrdered IS NOT NULL, od.quantityOrdered,0)) AS totalOfProducts
+	FROM products p  LEFT JOIN  orderdetails od
+	ON p.productCode = od.productCode
+	GROUP BY p.productCode;
+	Kết quả 110
+	
+	c2: SubQuery
+
+	SELECT  p.productCode,
+    		p.productName,
+    		p.productLine,
+    		SUM(p.quantityInStock + IF(sub.totalQuantityOrdered IS NOT NULL,sub.totalQuantityOrdered ,0)) AS totalOfProducts
+	FROM 	products p LEFT JOIN (
+    			SELECT 	productCode,
+       				SUM(quantityOrdered) AS totalQuantityOrdered
+   		 	FROM  orderdetails
+			) sub ON p.productCode = sub.productCode
+	GROUP BY p.productCode;
+
+	caua5: Get the name of the customer and the total amount they purchased.
+	(Lấy ra tên khách hàng và tổng số tiền họ đã mua)
+
+	c1: JOIN
+
+	SELECT 	c.customerNumber,
+		c.customerName,
+        SUM(IF(od.quantityOrdered IS NOT NULL, od.quantityOrdered,0) * IF(od.priceEach IS NOT NULL ,od.priceEach,0)) AS totalAmountPur
+	FROM customers c LEFT JOIN orders o ON c.customerNumber = o.customerNumber
+	LEFT JOIN orderdetails od ON o.orderNumber = od.orderNumber
+
+	GROUP BY c.customerNumber
+
+	kết quả: 122
+
+	c2: SubQuery
+
+	SELECT 	c.customerNumber,
+		c.customerName,
+        IF((SELECT SUM( od.quantityOrdered  *od.priceEach )
+         FROM orderdetails od
+         WHERE od.orderNumber IN( 
+         	SELECT o.orderNumber
+             FROM orders o
+             WHERE o.customerNumber = c.customerNumber
+         	)
+        ) IS NOT NULL, (SELECT SUM( od.quantityOrdered  *od.priceEach )
+         FROM orderdetails od
+         WHERE od.orderNumber IN( 
+         	SELECT o.orderNumber
+             FROM orders o
+             WHERE o.customerNumber = c.customerNumber
+         	)
+        ), 0)
+        AS totalAmountPur
+        
+FROM customers c 
+GROUP BY c.customerNumber
+	kết quả: 122
+
+8 SUBQUERY (Truy vấn con)
+Concept of Subquery:
+
+Non-correlated subquery: (Truy vấn con không tương quan) Truy vấn con độc lập với truy vấn bên ngoài. được thi hành thi hành đầu tiên và một lần duy nhất cho toàn
+bộ câu lệnh. Kết quả của truy vấn con được điền vào truy vấn bên ngoài, 
+và sử dụng ở truy vấn bên ngoài
+	SELECT *
+	FROM products
+	WHERE productCode not in	
+		(SELECT productCode	
+		FROM orderdetails
+		)
+	
+Correlated subquery: (Truy vấn con tương quan) Truy vấn con có sử dụng dữ liệu của truy vấn bên ngoài.
+	ex
+	SELECT * FROM products p
+	WHERE quantityInStock >
+		(SELECt avg(quantityInStock)
+		FROM products
+		WHERE productLine = p.productLine
+	)
+Use subqueries: Có thể sử dụng truy vấn con ở cả SELECT và FROM 
+	SELECT : Trả về kết quả cần hiển thị
+	FROM: trả về một bảng cần nối thông tin
+
+câu hỏi lab8
+	cau1:Use the subquery to list products that were ordered in March 2005
+	(các đơn hàng tháng 3 năm 2005)
+
+	(Thông tin của các đơn hàng tháng 3 năm 2003: Gồm orderDate, requiredDate,Status và tổng giá trị của đơn hàng)
+
+	c1: JOIN
+	SELECT 	o.orderNumber,
+		o.orderDate,
+        	o.requiredDate,
+       	 SUM(od.quantityOrdered * od.priceEach) AS total
+	FROM orders o JOIN orderdetails od
+	ON o.orderNumber = od.orderNumber
+	WHERE o.orderDate BETWEEN '2005-03-01' AND '2005-03-31'
+	GROUP BY o.orderNumber
+	
+	kết quả:13
+
+	c2: SubQuery
+	
+	SELECT 	o.orderNumber,
+		o.orderDate,
+        	o.requiredDate,
+       	 	(SELECT SUM(orderdetails.quantityOrdered * orderdetails.priceEach)
+       	 	FROM orderdetails 
+        WHERE o.orderNumber = orderdetails.orderNumber) AS total
+	FROM orders o 
+	WHERE o.orderDate BETWEEN '2005-03-01' AND '2005-03-31'
+	GROUP BY o.orderNumber
+	
+	kết quả 13
+
+	cau2:Use the subquery to display information about orders in the most recent month (using information from the orders table).
+	(Thông tin về tháng gần đây nhất)
+
+	SELECT *
+	FROM orders
+	WHERE MONTH(orders.orderDate) = (
+		SELECT MONTH(MAX(o.orderDate))
+   	 	FROM orders o
+		);
+	
+	cau3:Use subqueries to give information about orders and total value of this order (using
+information from orders and orderdetails tables).
+	(Sử dụng truy vấn con lấy thông tin về đơn hàng và tổng giá trị của đơn hàng đó)
+
+	SELECT 	o.orderNumber,
+		o.orderDate,
+        	o.requiredDate,
+        	o.shippedDate,
+        	(SELECT SUM(od.quantityOrdered * od.priceEach)
+       	 	FROM orderdetails od
+        	WHERE o.orderNumber = od.orderNumber) AS totalValue
+	FROM orders o
+	ORDER BY o.orderNumber
+
+	cau4:Use the subquery get the customer's name and the total amount they have to pay
+	(Lấy ra tên khách hàng và tổng số tiền họ phải trả)
+
+	c1: JOIN
+
+	SELECT 	c.customerNumber,
+		c.customerName,
+        	SUM(pm.amount) AS totalAmount
+	FROM customers c LEFT JOIN payments pm 
+	ON c.customerNumber = pm.customerNumber
+	GROUP BY c.customerNumber
+
+	kết quả: 122
+
+	c2: SubQuery
+	
+	SELECT 	c.customerNumber,
+		c.customerName,
+       		( SELECT SUM(pm.amount)
+      	 	  FROM payments pm
+       	 	  WHERE pm.customerNumber = c.customerNumber
+       		) AS totalAmount
+	FROM customers c 
+	GROUP BY c.customerNumber

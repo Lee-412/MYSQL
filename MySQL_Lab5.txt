@@ -1,0 +1,34 @@
+1: SubString
+SELECT productName, SUBSTR(productName, 1, 4) FROM products;
+
+SELECT productName, LEFT(productName, 4) FROM products;
+
+2: ConCat
+SELECT CONCAT(contactLastName, contactFirstName) AS FullName 
+FROM customers;
+
+SELECT CONCAT(contactLastName,',', contactFirstName) AS FullName, CONCAT_WS("---",addressLine1, addressLine2, phone)
+AS INFOR FROM customers;
+
+3: IF
+SELECT CONCAT(contactLastName,',', contactFirstName) AS FullName, 
+IF(addressLine2 IS NULL, addressLine1, CONCAT(addressLine1, ',' ,addressLine2))
+AS INFOR FROM customers; 
+
+5: LAST_INSERT_ID 
+
+6: DATEDIFF
+SELECT DATEDIFF('2011-08-17','2011-08-19')
+
+SELECT orderDate, shippedDate,
+DATEDIFF(shippedDate, orderDate) AS days
+FROM orders
+WHERE status = "Shipped"
+ORDER BY days ASC LIMIT 15;
+
+SELECT orderDate, shippedDate,
+DATEDIFF(requiredDate, shippedDate) AS dayleft
+FROM orders
+ORDER BY dayleft DESC;
+
+SELECT EXTRACT(YEAR FROM '2004-12-31 23:59:59'); 

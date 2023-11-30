@@ -1,0 +1,53 @@
+QUESTION 1.Because some orders were canceled but the system still charged customers.
+Write 01 query to display customerName, purchasedMoney, paidMoney, canceledMoney, debt. 
+If the canceledMoney = debt, add the value "Mistake" to the Note column.
+
+
+SELECT customerName, (SELECT SUM(quantityOrdered * priceEach)
+									  FROM orderdetails
+                                      WHERE orderNumber IN (SELECT orderNumber FROM orders WHERE customerNumber = c.customerNumber)
+                                      ) AS purchasedMoney
+								   , (SELECT SUM(amount) 
+                                      FROM payments
+                                      WHERE customerNumber = c.customerNumber) AS paidMoney
+                                   , (SELECT SUM(quantityOrdered * priceEach)
+									  FROM orderdetails
+                                      WHERE orderNumber IN (SELECT orderNumber FROM orders WHERE customerNumber = c.customerNumber 
+                                      AND status = 'Cancelled')
+                                      ) AS canceledMoney
+                                   , (SELECT purchasedMoney - paidMoney) AS debt
+                                   , (IF ((SELECT debt) = (SELECT canceledMoney), 'Mistake', '')) AS Note
+FROM customers c
+ORDER BY debt DESC;
+
+QUESTION 4.Write 01 query to display full information about customers with the largest and smallest DEBT amounts greater than 0 in the same data table. Note, it doesn't matter whether the order status is
+cancelled or not.
+
+
+(SELECT customerName, 'largest debt' AS Note
+FROM
+(SELECT *, (SELECT SUM(quantityOrdered * priceEach)
+									  FROM orderdetails
+                                      WHERE orderNumber IN (SELECT orderNumber FROM orders WHERE customerNumber = c.customerNumber)
+                                      ) AS purchasedMoney
+								   , (SELECT SUM(amount) 
+                                      FROM payments
+                                      WHERE customerNumber = c.customerNumber) AS paidMoney		
+                                   , (SELECT purchasedMoney - paidMoney) AS debt
+FROM customers c) t
+WHERE debt > 0
+ORDER BY debt DESC LIMIT 1)
+UNION
+(SELECT customerName, 'smallest debt' AS Note
+FROM
+(SELECT customerName, (SELECT SUM(quantityOrdered * priceEach)
+									  FROM orderdetails
+                                      WHERE orderNumber IN (SELECT orderNumber FROM orders WHERE customerNumber = c.customerNumber)
+                                      ) AS purchasedMoney
+								   , (SELECT SUM(amount) 
+                                      FROM payments
+                                      WHERE customerNumber = c.customerNumber) AS paidMoney		
+                                   , (SELECT purchasedMoney - paidMoney) AS debt
+FROM customers c) t
+WHERE debt > 0
+ORDER BY debt ASC LIMIT 1)

@@ -1,0 +1,87 @@
+QUESTION 1. (2 points).
+Write a query to display information of customers who have never paid
+
+SELECT * 
+FROM customers 
+WHERE customerNumber NOT IN (SELECT customerNumber FROM payments);
+
+QUESTION 2. (3 points)
+Write 01 query to display name, text description, and the total quantity of products of
+productline that have total quantity of products greater than 50.000. Sort in descending order of
+quantity.
+
+SELECT productline, textDescription, (SELECT SUM(quantityInStock) 
+									  FROM products 
+                                      WHERE productline = pl.productline) AS quantityInStock
+								   , (SELECT SUM(quantityOrdered) 
+                                      FROM orderDetails 
+                                      WHERE productCode IN (SELECT productCode FROM products WHERE productline = pl.productline)
+                                      AND orderNumber NOT IN (SELECT orderNumber FROM orders WHERE status = 'Cancelled')) 
+                                      AS quantitySold
+                                   , (SELECT quantitySold + quantityInStock) AS totalQuantity
+FROM productlines pl
+HAVING totalQuantity > 50000
+ORDER BY totalQuantity DESC;
+
+QUESTION 3. (2 points)
+Write 01 query to display information of the worst-buy and the best-buy productlines (including
+productlines, textDescription and the quantity of sold products). Add a ‘note’ column that
+indicates which productline is the best- or worst-buy.
+
+c1:
+
+(SELECT productline, textDescription, (SELECT SUM(quantityOrdered)
+									  FROM orderdetails
+                                      WHERE productCode IN (SELECT productCode FROM products WHERE productline = pl.productline)
+                                      AND orderNumber NOT IN (SELECT orderNumber FROM orders WHERE status = 'Cancelled')
+                                      ) AS quantitySold, 'Worst-buy' AS Note
+FROM productlines pl
+ORDER BY quantitySold ASC LIMIT 1)
+UNION
+(SELECT productline, textDescription, (SELECT SUM(quantityOrdered)
+									  FROM orderdetails
+                                      WHERE productCode IN (SELECT productCode FROM products WHERE productline = pl.productline)
+                                      AND orderNumber NOT IN (SELECT orderNumber FROM orders WHERE status = 'Cancelled')
+                                      ) AS quantitySold, 'Best-buy' AS Note
+FROM productlines pl
+ORDER BY quantitySold DESC LIMIT 1);
+
+c2:
+
+SELECT productline, (SELECT SUM(quantityOrdered)
+					 FROM orderdetails
+                     WHERE productCode IN 
+                     (SELECT productCode FROM products WHERE productline = pl.productline)) AS quantityOrdered
+FROM productlines pl
+HAVING quantityOrdered = (SELECT MAX(total) FROM
+							(SELECT productline, (SELECT SUM(quantityOrdered) 
+												 FROM orderdetails 
+												 WHERE productCode IN (SELECT productCode FROM products WHERE productline = p.productline)
+												 ) AS total
+							FROM products p
+							GROUP BY productline) t)
+UNION
+SELECT productline, (SELECT SUM(quantityOrdered)
+					 FROM orderdetails
+                     WHERE productCode IN 
+                     (SELECT productCode FROM products WHERE productline = pl.productline)) AS quantityOrdered
+FROM productlines pl
+HAVING quantityOrdered = (SELECT MIN(total) FROM
+							(SELECT productline, (SELECT SUM(quantityOrdered) 
+												 FROM orderdetails 
+												 WHERE productCode IN (SELECT productCode FROM products WHERE productline = p.productline)
+												 ) AS total
+							FROM products p
+							GROUP BY productline) t);
+
+QUESTION 4. (2 points)
+Write a query to display codes of products that need to be sent back to stock and the
+corresponding quantity to send back to stock (hint: get information from canceled orders (status is 'canceled')). Sort ascending by the product code.
+
+SELECT * FROM (SELECT productCode, (SELECT SUM(quantityOrdered)
+					 FROM orderdetails
+                     WHERE productCode = p.productCode AND orderNumber IN (SELECT orderNumber FROM orders WHERE status = 'Cancelled')
+                     ) AS quantitySentBack
+FROM products p) pc
+WHERE quantitySentBack IS NOT NULL
+ORDER BY productCode ASC;

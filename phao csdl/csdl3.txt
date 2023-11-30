@@ -1,0 +1,19 @@
+1.Viết câu truy vấn để đưa ra các nhân viên đang làm việc dưới quyền người quản lý,  mà trong đó người quản lý này lại quản lý số lượng nhân viên nhiều nhất
+
+SELECT *
+FROM employees
+WHERE reportsTo IN (SELECT reportsTo FROM (SELECT reportsTo, COUNT(*) as total
+					FROM employees
+					GROUP BY reportsTo) r
+					WHERE total = (SELECT MAX(e.total) FROM (SELECT COUNT(*)AS total FROM employees GROUP BY reportsTo) e));
+
+2.Viết câu truy vấn để tìm ra ít nhất một khách hàng đã đặt cùng một sản phẩm với một khách hàng khácc
+CREATE VIEW productCustomer AS SELECT productCode, (SELECT customerNumber 
+					 FROM orders 
+                     WHERE orderNumber = o.orderNumber) AS customerNumber
+FROM orderdetails o;
+
+SELECT DISTINCT customerNumber
+FROM productCustomer p
+WHERE productCode IN (SELECT productCode FROM v WHERE customerNumber != p.customerNumber);
+
