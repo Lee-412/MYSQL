@@ -1,0 +1,74 @@
+
+cau 1. Thông tin 3 productline có số lượng hủy nhiều nhất
+SELECT pl.productLine, pl.textDescription,
+		(SELECT SUM(od.quantityOrdered)
+         FROM orderdetails od
+          WHERE od.orderNumber IN	
+         	(SELECT o.orderNumber
+            FROM orders o
+            WHERE o.status = 'Cancelled')
+         AND pl.productLine IN
+         (SELECT p.productLine
+          FROM products p
+          WHERE p.productCode = od.productCode
+			)
+        ) AS totalCancelled
+FROM productlines pl
+GROUP BY pl.productLine
+ORDER BY totalCancelled DESC LIMIT 3
+
+cau 2. Thông tin người nợ xấu (debt/purchase > 0.3)
+
+SELECT 	c.customerNumber, 
+		c.customerName,
+
+        (SELECT IF(SUM( od.quantityOrdered  *od.priceEach ) IS NOT NULL, 
+                   SUM( od.quantityOrdered  *od.priceEach ), 0)
+        FROM orderdetails od
+        WHERE od.orderNumber IN( 
+         		SELECT o.orderNumber
+         	    FROM orders o
+         	    WHERE o.customerNumber = c.customerNumber AND o.status != 'Cancelled')
+        ) AS purchase,
+     
+        ( SELECT purchase - IF( SUM(pm.amount) IS NOT NULL , SUM(pm.amount), 0 )
+      	 FROM payments pm
+       	 WHERE pm.customerNumber = c.customerNumber ) AS debt,
+        (SELECT debt /purchase ) AS totalDebt
+        
+FROM customers c
+HAVING totalDebt > 0.3
+
+
+cau 3. Thông tin khách hàng có đơn hàng của sản phẩm được sản xuất trước năm 1940
+
+SELECT 	c.customerNumber,
+		c.customerName
+FROM customers c
+WHERE c.customerNumber IN 
+	(SELECT o.customerNumber
+    FROM orders o
+    WHERE o.orderNumber IN
+    	(SELECT od.orderNumber
+        FROM orderdetails od
+        WHERE od.productCode IN
+        	(SELECT p.productCode
+            FROM products p
+            WHERE 	SUBSTRING(p.productName, 1, 4)  < '1940') 
+        )
+    )
+
+
+Câu 4
+SELECT productCode, productName, Profit_1, Profit_2, (Profit_1 - Profit_2) AS Difference
+FROM (
+    SELECT
+        p.productCode,
+        p.productName,
+        (SELECT SUM(quantityOrdered) FROM orderdetails od WHERE od.productCode = p.productCode) AS totalOrdered,
+        (SELECT SUM((p.MSRP - p.buyPrice) * od.quantityOrdered) FROM orderdetails od WHERE od.productCode = p.productCode) AS Profit_1,
+        (SELECT SUM((od.priceEach - p.buyPrice) * od.quantityOrdered) FROM orderdetails od WHERE od.productCode = p.productCode) AS Profit_2
+    FROM
+        products p
+) AS subquery
+ORDER BY Difference DESC;
