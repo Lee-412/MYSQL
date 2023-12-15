@@ -1,0 +1,106 @@
+1.
+SELECT customerName, customerNumber, (SELECT DATEDIFF('2005-06-02', MAX(orderDate))
+									  FROM orders
+                                      WHERE customerNumber = c.customerNumber) AS Recency,
+                                      (SELECT COUNT(*)
+                                      FROM orders
+                                      WHERE customerNumber = c.customerNumber) AS Frequency,
+                                      (SELECT SUM(priceEach * quantityOrdered)
+                                      FROM orderDetails
+                                      WHERE orderNumber IN (SELECT orderNumber
+															FROM orders WHERE customerNumber = c.customerNumber)) AS Monetary
+FROM customers c;
+2.
+SELECT * FROM (
+SELECT customerName, customerNumber, (SELECT DATEDIFF('2005-06-02', MAX(orderDate))
+									  FROM orders
+                                      WHERE customerNumber = c.customerNumber) AS Recency,
+                                      (SELECT COUNT(*)
+                                      FROM orders
+                                      WHERE customerNumber = c.customerNumber) AS Frequency,
+                                      (SELECT SUM(priceEach * quantityOrdered)
+                                      FROM orderDetails
+                                      WHERE orderNumber IN (SELECT orderNumber
+															FROM orders WHERE customerNumber = c.customerNumber)) AS Monetary
+FROM customers c) t
+WHERE Recency <= 5 AND Frequency >= 5 OR Monetary >= 500000;
+3.
+SELECT productline, textDescription, totalQuantity FROM
+(SELECT productline, textDescription, (SELECT SUM(quantityInStock)
+									  FROM products
+                                      WHERE productline = pl.productline) AS quantityInStock,
+                                      (SELECT IF(SUM(quantityOrdered) IS NULL, 0, SUM(quantityOrdered))
+                                      FROM orderdetails
+                                      WHERE productCode IN (SELECT productCode
+															FROM products
+                                                            WHERE productline = pl.productline)
+											AND orderNumber IN (SELECT orderNumber
+																	FROM orders
+                                                                    WHERE status != 'Cancelled')) AS quantitySold, 
+									  (SELECT quantityInStock + quantitySold) AS totalQuantity
+FROM productlines pl) t
+WHERE totalQuantity >= 50000
+ORDER BY totalQuantity DESC;
+4.
+SELECT * FROM
+(SELECT customerName, (SELECT IF(SUM(quantityOrdered * priceEach) IS NULL, 0, SUM(quantityOrdered * priceEach))
+					  FROM orderdetails
+                      WHERE orderNumber IN (SELECT orderNumber
+											FROM orders
+                                            WHERE customerNumber = c. customerNumber AND status != 'Cancelled')) AS totalPurchase,
+                      (SELECT IF(SUM(amount) IS NULL, 0, SUM(amount))
+					  FROM payments
+                      WHERE customerNumber = c.customerNumber) AS totalPaid, 
+                      (SELECT totalPurchase - totalPaid) AS totalDebt
+FROM customers c) t
+WHERE totalPurchase < 100000;
+
+2. Thông tin người nợ xấu (debt/purchase >= 0.4)
+
+SELECT c.*, (SELECT IF(SUM(quantityOrdered * priceEach) IS NULL, 0, SUM(quantityOrdered * priceEach))
+						FROM orderDetails
+                        WHERE orderNumber IN (SELECT orderNumber
+											  FROM orders
+                                              WHERE c.customerNumber = customerNumber)) AS totalPurchase,
+						(SELECT IF(SUM(amount) IS NULL, 0, SUM(amount))
+						 FROM payments
+                         WHERE customerNumber = c.customerNumber) AS totalPaid, 
+                         (SELECT totalPurchase - totalPaid) AS debt
+FROM customers c
+HAVING debt/totalPurchase >= 0.4;
+
+3.Write 1 query to display name, text description, and the total quantity of products of productlines that have total quantity of products greater than 50000. Sort them in descending order of quantity (total quantity of products = in stock + sold)
+
+SELECT pl.*, (SELECT SUM(quantityInStock)
+					 FROM products
+                     WHERE productline = pl.productline) AS totalInStock, 
+                     (SELECT SUM(quantityOrdered)
+                      FROM orderDetails
+                      WHERE productCode IN (SELECT productCode
+											FROM products
+                                            WHERE productline = pl.productline)) AS totalSold, 
+					(SELECT totalInStock + totalSold) AS totalQuantity
+FROM productlines pl
+HAVING totalQuantity >= 50000
+ORDER BY totalQuantity DESC;
+
+4.productCode productName profit1 profit2 difference group
+ 6 cột
+profit1 là sum của quantityOrder * (msrp - buyPrice)
+
+profit2 là sum của quantityOrder * (priceEach - buyPrice)
+
+difference là profit1 - profit2
+
+ SELECT productCode, productName, (SELECT SUM(quantityOrdered * (MSRP - buyPrice))
+								  FROM orderDetails
+                                  WHERE productCode = p.productCode) AS profit1, 
+                                  (SELECT SUM(quantityOrdered * (o.priceEach - buyPrice))
+                                   FROM orderDetails o
+                                   WHERE productCode = p.productCode) AS profit2, 
+								  (SELECT profit1 - profit2) AS difference,
+                                  SUBSTRING(productName, 1 ,4) AS first4Char,
+                                  (SELECT IF(first4Char REGEXP '^[0-9]+$' AND first4Char < 1940, 1, 2)) AS 'Group'
+FROM products p;
+
+4 chữ cái đầu trong tên < 1940 thì là group1, còn lại là 2 (kể cả mấy con 18th century)
